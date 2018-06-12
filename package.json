@@ -1,19 +1,16 @@
 {
   "name": "topfood-nodejs",
-  "version": "1.0.0",
-  "description": "Backend - Aplicativo de Comida que apresenta lanches servidos nos restaurantes da PUCRS e permite aos usuários a postarem imagens das comidas e comentários a respeito.",
-  "main": "app.js",
+  "version": "0.0.1",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node ./bin/www"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/grupodobaralho/topfood-nodejs.git"
-  },
-  "author": "Diego Osmarin Basso",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/grupodobaralho/topfood-nodejs/issues"
-  },
-  "homepage": "https://github.com/grupodobaralho/topfood-nodejs#readme"
+  "dependencies": {
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.6.9",
+    "express": "~4.16.0",
+    "http-errors": "~1.6.2",
+    "jade": "~1.11.0",
+    "morgan": "~1.9.0"
+  }
 }
