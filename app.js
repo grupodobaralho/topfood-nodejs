@@ -1,45 +1,34 @@
 var createError = require('http-errors');
 var express = require('express');
+var app = express();
+var port = process.env.PORT || 3003;
+var mongoose = require("mongoose");
 var path = require('path');
 var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+var morgan = require('morgan');
 var passport = require("passport");
-var authenticate = require("./authenticate");
-var config = require('./config');
+var authenticate = require("./config/authenticate");
+var config = require('./config/config');
 
+// variables containing the routes files
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var peopleRouter = require('./routes/peopleRouter');
 
-const mongoose = require("mongoose");
-mongoose.Promise = require("bluebird");
+// configuration ===============================================================
+mongoose.connect(process.env.MONGODB_URI || config.mongoUrl); // connect to our database
 
-const url = config.mongoUrl;
-const connect = mongoose.connect(url, {
-  useMongoClient: true
-});
-
-connect.then((db) => {
-  console.log("Connect correctly to server!");
-}, (err) => { console.log(err); });
-
-var app = express();
-
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
-
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
+// set up our express application
+app.use(morgan('dev')); // log every request to the console
+app.use(cookieParser()); // read cookies (needed for auth)
+app.use(express.json()); // these two get information from html forms
+app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 
+// routes ======================================================================
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-
-app.use(express.static(path.join(__dirname, "public")));
-
-//app.use("/dishes", dishRouter);
+app.use("/people", peopleRouter);
 //app.use("/promotions", promoRouter);
 //app.use("/leaders", leaderRouter);
 //app.use("/imageUpload", uploadRouter);
@@ -60,4 +49,6 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-module.exports = app;
+// launch ======================================================================
+app.listen(port);
+console.log('Acesse localhost:' + port);

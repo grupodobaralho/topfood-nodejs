@@ -1,6 +1,6 @@
 var passport = require("passport");
 var LocalStrategy = require("passport-local");
-var User = require("./models/user");
+var User = require("../models/user");
 var JwtStrategy = require("passport-jwt").Strategy;
 var ExtractJwt = require("passport-jwt").ExtractJwt;
 var jwt = require("jsonwebtoken");
@@ -22,7 +22,6 @@ opts.secretOrKey = config.secretKey;
 
 exports.jwtPassport = passport.use(new JwtStrategy(opts,
     (jwt_payload, done) => {
-        console.log("JWT payload: ", jwt_payload);
         User.findOne({_id: jwt_payload._id}, (err, user) => {
             if (err) {
                 return done(err, false);
@@ -39,7 +38,7 @@ exports.jwtPassport = passport.use(new JwtStrategy(opts,
 exports.verifyUser = passport.authenticate('jwt', {session: false});
 
 exports.verifyAdmin = function (req, res, next) {
-    if (req.user.admin) {
+    if (req.user.admin || req.user.username == "admin") {
         next();
     }
     else {

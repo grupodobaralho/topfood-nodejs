@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node app.js"
   },
   "dependencies": {
     "bluebird": "^3.5.1",
@@ -13,7 +13,7 @@
     "http-errors": "~1.6.2",
     "jade": "~1.11.0",
     "jsonwebtoken": "^8.3.0",
-    "mongoose": "^4.13.14",
+    "mongoose": "^5.1.5",
     "morgan": "~1.9.0",
     "passport": "^0.4.0",
     "passport-jwt": "^3.0.1",
