@@ -8,7 +8,7 @@ var router = express.Router();
 router.use(bodyParser.json());
 
 // GET /users
-router.get('/', authenticate.verifyUser, function(req, res, next) {
+router.get('/', function(req, res, next) {
   User.find()
 	.then((user) => {
 		res.statusCode = 200;

@@ -16,7 +16,7 @@ var usersRouter = require('./routes/users');
 var peopleRouter = require('./routes/peopleRouter');
 
 // configuration ===============================================================
-mongoose.connect(process.env.MONGODB_URI || config.mongoUrl); // connect to our database
+mongoose.connect(process.env.MONGODB_URI || config.mLab); // connect to our database
 
 // set up our express application
 app.use(morgan('dev')); // log every request to the console
@@ -46,7 +46,8 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  res.render('error');
+  res.setHeader("Content-Type", "application/json");
+  res.json({err: err});
 });
 
 // launch ======================================================================
