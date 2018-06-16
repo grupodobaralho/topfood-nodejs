@@ -2,7 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const authenticate = require("../config/authenticate");
-const People = require("../models/people");''
+const People = require("../models/people");
 
 const peopleRouter = express.Router();
 
