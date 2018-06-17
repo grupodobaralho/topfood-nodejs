@@ -1,40 +1,40 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const authenticate = require("../config/authenticate");
-const People = require("../models/people");
+const Restaurant = require("../models/restaurant");
 
-const peopleRouter = express.Router();
+const restaurantRouter = express.Router();
 
-peopleRouter.use(bodyParser.json());
+restaurantRouter.use(bodyParser.json());
 
 /*------------------------------------
- * /people
+ * /restaurant
  * -----------------------------------*/
-peopleRouter.route("/")
+restaurantRouter.route("/")
 .get((req, res, next) => {
-    People.find({})
-    .then((people) => {
+    Restaurant.find({})
+    .then((restaurant) => {
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
-        res.json(people);
+        res.json(restaurant);
     }, (err) => next(err))
     .catch((err) => next(err));
 })
 .post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    People.create(req.body)
-    .then((people) => {
+    Restaurant.create(req.body)
+    .then((restaurant) => {
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
-        res.json(people);
+        res.json(restaurant);
     }, (err) => next(err))
     .catch((err) => next(err));
 })
 .put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
-    res.end("PUT operation not supported on /people");
+    res.end("PUT operation not supported on /restaurant");
 })
 .delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    People.remove({})
+    Restaurant.remove({})
     .then((resp) => {
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
@@ -44,35 +44,35 @@ peopleRouter.route("/")
 });
 
 /*------------------------------------
- * /people/:personId
+ * /restaurant/:restaurantId
  * -----------------------------------*/
-peopleRouter.route("/:personId")
+restaurantRouter.route("/:restaurantId")
 .get((req, res, next) => {
-    People.findById(req.params.personId)
-    .then((people) => {
+    Restaurant.findById(req.params.restaurantId)
+    .then((restaurant) => {
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
-        res.json(people);
+        res.json(restaurant);
     }, (err) => next(err))
     .catch((err) => next(err));
 })
 .post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
-    res.end("POST method not supported on /people/personId" + req.params.personId);
+    res.end("POST method not supported on /restaurant/restaurantId" + req.params.restaurantId);
 })
 .put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    People.findByIdAndUpdate(req.params.personId, {
+    Restaurant.findByIdAndUpdate(req.params.restaurantId, {
         $set: req.body
     }, { new: true })
-    .then((people) => {
+    .then((restaurant) => {
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
-        res.json(people);
+        res.json(restaurant);
     }, (err) => next(err))
     .catch((err) => next(err));
 })
 .delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    People.findByIdAndRemove(req.params.personId)
+    Restaurant.findByIdAndRemove(req.params.restaurantId)
     .then((resp) => {
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
@@ -81,4 +81,4 @@ peopleRouter.route("/:personId")
     .catch((err) => next(err));
 });
 
-module.exports = peopleRouter;
+module.exports = restaurantRouter;
