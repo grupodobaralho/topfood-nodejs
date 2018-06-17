@@ -29,6 +29,4 @@ const peopleSchema = new Schema({
     }
 });
 
-var People = mongoose.model("People", peopleSchema);
-
-module.exports = People;
+module.exports = mongoose.model("People", peopleSchema);

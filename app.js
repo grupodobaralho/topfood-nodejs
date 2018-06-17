@@ -29,7 +29,7 @@ app.use(passport.initialize());
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/people", peopleRouter);
-app.use("/restaurants", restaurantRouter);
+app.use("/restaurant", restaurantRouter);
 //app.use("/product", productRouter);
 //app.use("/imageUpload", uploadRouter);
 
