@@ -43,16 +43,11 @@ restaurantRouter.route("/")
     res.end("PUT operation not supported on /restaurants");
 })
 .delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    Restaurant.remove({})
-    .then((restaurants) => {
-        restaurants.forEach(restaurant => {
-            restaurant.createdAt = restaurant.createdAt - GMT_Brasil;
-            restaurant.updatedAt = restaurant.updatedAt - GMT_Brasil; 
-        });
-
+    Restaurant.deleteMany({})
+    .then((resp) => {
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
-        res.json(restaurants);
+        res.json(resp);
     }, (err) => next(err))
     .catch((err) => next(err));
 });
