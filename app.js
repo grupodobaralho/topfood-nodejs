@@ -29,7 +29,7 @@ app.use(passport.initialize());
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/people", peopleRouter);
-app.use("/restaurant", restaurantRouter);
+app.use("/restaurants", restaurantRouter);
 //app.use("/product", productRouter);
 //app.use("/imageUpload", uploadRouter);
 
@@ -45,9 +45,9 @@ app.use(function(err, req, res, next) {
   res.locals.error = req.app.get("env") === "development" ? err : {};
 
   // render the error page
-  res.status(err.status || 500);
+  res.status(err.statusCode || 500);
   res.setHeader("Content-Type", "application/json");
-  res.json({err: err});
+  res.json({message: err.message});
 });
 
 // launch ======================================================================

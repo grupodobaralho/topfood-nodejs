@@ -1,10 +1,10 @@
-var express = require("express");
+const express = require("express");
 const bodyParser = require("body-parser");
-var User = require("../models/user");
-var passport = require("passport");
-var authenticate = require("../config/authenticate");
+const User = require("../models/user");
+const passport = require("passport");
+const authenticate = require("../config/authenticate");
 
-var router = express.Router();
+const router = express.Router();
 router.use(bodyParser.json());
 
 // GET /users

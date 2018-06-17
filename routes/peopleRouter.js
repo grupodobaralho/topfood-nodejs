@@ -4,7 +4,6 @@ const authenticate = require("../config/authenticate");
 const People = require("../models/people");
 
 const peopleRouter = express.Router();
-
 peopleRouter.use(bodyParser.json());
 
 /*------------------------------------
