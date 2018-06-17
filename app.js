@@ -3,18 +3,17 @@ var express = require("express");
 var app = express();
 var port = process.env.PORT || 3003;
 var mongoose = require("mongoose");
-var path = require("path");
 var cookieParser = require("cookie-parser");
 var morgan = require("morgan");
 var passport = require("passport");
-var authenticate = require("./config/authenticate");
 var config = require("./config/config");
 
 // variables containing the routes files
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var peopleRouter = require("./routes/peopleRouter");
-//var restaurantRouter = require("./routes/restaurantRouter");
+var restaurantRouter = require("./routes/restaurantRouter");
+//var productRouter = require("./routes/productRouter");
 
 // configuration ===============================================================
 mongoose.connect(process.env.MONGODB_URI || config.mLab); // connect to our database
@@ -30,8 +29,8 @@ app.use(passport.initialize());
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/people", peopleRouter);
-//app.use("/restaurants", restaurantRouter);
-//app.use("/leaders", leaderRouter);
+app.use("/restaurants", restaurantRouter);
+//app.use("/product", productRouter);
 //app.use("/imageUpload", uploadRouter);
 
 // catch 404 and forward to error handler
