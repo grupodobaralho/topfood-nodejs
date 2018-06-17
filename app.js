@@ -14,6 +14,7 @@ var config = require("./config/config");
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var peopleRouter = require("./routes/peopleRouter");
+//var restaurantRouter = require("./routes/restaurantRouter");
 
 // configuration ===============================================================
 mongoose.connect(process.env.MONGODB_URI || config.mLab); // connect to our database
@@ -29,7 +30,7 @@ app.use(passport.initialize());
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/people", peopleRouter);
-//app.use("/promotions", promoRouter);
+//app.use("/restaurants", restaurantRouter);
 //app.use("/leaders", leaderRouter);
 //app.use("/imageUpload", uploadRouter);
 
