@@ -18,6 +18,11 @@ restaurantRouter.route("/")
         restaurants.forEach(restaurant => {
             restaurant.createdAt -= GMT_Brasil;
             restaurant.updatedAt -= GMT_Brasil;
+
+            restaurant.products.forEach(product => {
+                product.createdAt -= GMT_Brasil;
+                product.updatedAt -= GMT_Brasil;
+            });
         });
 
         res.statusCode = 200;
@@ -187,9 +192,12 @@ restaurantRouter.route("/:restaurantId/products")
 restaurantRouter.route("/:restaurantId/products/:productId")
 .get((req, res, next) => {
     Restaurant.findById(req.params.restaurantId)
-    //.populate("products.comments")
+    //.populate("products.comments.author")
     .then((restaurant) => {
         if(restaurant != null && restaurant.products.id(req.params.productId) != null) {
+            restaurant.products.id(req.params.productId).createdAt -= GMT_Brasil;
+            restaurant.products.id(req.params.productId).updatedAt -= GMT_Brasil;
+
             res.statusCode = 200;
             res.setHeader("Content-Type", "application/json");
             res.json(restaurant.products.id(req.params.productId));
@@ -222,6 +230,9 @@ restaurantRouter.route("/:restaurantId/products/:productId")
 
             restaurant.save()
             .then((restaurant) => {
+                restaurant.products.id(req.params.productId).createdAt -= GMT_Brasil;
+                restaurant.products.id(req.params.productId).updatedAt -= GMT_Brasil;
+                
                 res.statusCode = 200;
                 res.setHeader("Content-Type", "application/json");
                 res.json(restaurant.products.id(req.params.productId));
@@ -247,6 +258,9 @@ restaurantRouter.route("/:restaurantId/products/:productId")
             var removed = restaurant.products.id(req.params.productId).remove();
             restaurant.save()
             .then((restaurant) => {
+                removed.createdAt -= GMT_Brasil;
+                removed.updatedAt -= GMT_Brasil;
+                
                 res.statusCode = 200;
                 res.setHeader("Content-Type", "application/json");
                 res.json(removed);
