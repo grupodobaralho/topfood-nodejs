@@ -8,12 +8,13 @@ const GMT_Brasil = 3 * 60 * 60 * 1000; //GMT-3 Brasil
 const restaurantRouter = express.Router();
 restaurantRouter.use(bodyParser.json());
 
-/*-------------
- * /restaurants
- * ------------*/
-restaurantRouter.route("/")
-.get((req, res, next) => {
+/*------------------------
+ * /restaurants/everything
+ * -----------------------*/
+restaurantRouter.route("/everything")
+.get(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Restaurant.find({})
+    .populate("products.comments.author", "username")
     .then((restaurants) => {
         restaurants.forEach(restaurant => {
             restaurant.createdAt -= GMT_Brasil;
@@ -22,7 +23,31 @@ restaurantRouter.route("/")
             restaurant.products.forEach(product => {
                 product.createdAt -= GMT_Brasil;
                 product.updatedAt -= GMT_Brasil;
+
+                product.comments.forEach(comment => {
+                    comment.createdAt -= GMT_Brasil;
+                    comment.updatedAt -= GMT_Brasil;
+                });
             });
+        });
+
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(restaurants);
+    }, (err) => next(err))
+    .catch((err) => next(err));
+});
+
+/*-------------
+ * /restaurants
+ * ------------*/
+restaurantRouter.route("/")
+.get((req, res, next) => {
+    Restaurant.find({}, "-products")
+    .then((restaurants) => {
+        restaurants.forEach(restaurant => {
+            restaurant.createdAt -= GMT_Brasil;
+            restaurant.updatedAt -= GMT_Brasil;
         });
 
         res.statusCode = 200;
@@ -62,10 +87,15 @@ restaurantRouter.route("/")
  * --------------------------*/
 restaurantRouter.route("/:restaurantId")
 .get((req, res, next) => {
-    Restaurant.findById(req.params.restaurantId)
+    Restaurant.findById(req.params.restaurantId, "-products.comments")
     .then((restaurant) => {
         restaurant.createdAt -= GMT_Brasil;
         restaurant.updatedAt -= GMT_Brasil;
+
+        restaurant.products.forEach(product => {
+            product.createdAt -= GMT_Brasil;
+            product.updatedAt -= GMT_Brasil;
+        });
         
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
@@ -116,7 +146,7 @@ restaurantRouter.route("/:restaurantId")
  * -----------------------------------*/
 restaurantRouter.route("/:restaurantId/products")
 .get((req, res, next) => {
-    Restaurant.findById(req.params.restaurantId)
+    Restaurant.findById(req.params.restaurantId, "-products.comments")
     .then((restaurant) => {
         if(restaurant != null) {
             restaurant.products.forEach(product => {
@@ -170,7 +200,7 @@ restaurantRouter.route("/:restaurantId/products")
             for(var i = (restaurant.products.length - 1); i >= 0; i--) {
                 restaurant.products.id(restaurant.products[i]._id).remove();
             }
-            
+
             restaurant.save()
             .then((restaurant) => {
                 res.statusCode = 200;
@@ -193,7 +223,6 @@ restaurantRouter.route("/:restaurantId/products")
 restaurantRouter.route("/:restaurantId/products/:productId")
 .get((req, res, next) => {
     Restaurant.findById(req.params.restaurantId)
-    //.populate("products.comments.author")
     .then((restaurant) => {
         if(restaurant != null && restaurant.products.id(req.params.productId) != null) {
             restaurant.products.id(req.params.productId).createdAt -= GMT_Brasil;
@@ -256,16 +285,16 @@ restaurantRouter.route("/:restaurantId/products/:productId")
     Restaurant.findById(req.params.restaurantId)
     .then((restaurant) => {
         if(restaurant != null && restaurant.products.id(req.params.productId) != null) {
-            var removed = restaurant.products.id(req.params.productId).remove();
+            var productRemoved = restaurant.products.id(req.params.productId).remove();
 
             restaurant.save()
             .then((restaurant) => {
-                removed.createdAt -= GMT_Brasil;
-                removed.updatedAt -= GMT_Brasil;
+                productRemoved.createdAt -= GMT_Brasil;
+                productRemoved.updatedAt -= GMT_Brasil;
                 
                 res.statusCode = 200;
                 res.setHeader("Content-Type", "application/json");
-                res.json(removed);
+                res.json(productRemoved);
             }, (err) => next(err));
         }
         else if(restaurant == null) {
@@ -385,18 +414,28 @@ restaurantRouter.route("/:restaurantId/products/:productId/comments")
  * /restaurants/:restaurantId/products/:productId/comments/:commentId
  * ------------------------------------------------------------------*/
 restaurantRouter.route("/:restaurantId/products/:productId/comments/:commentId")
-.options((req, res) => { res.sendStatus(200); })
 .get((req, res, next) => {
     Restaurant.findById(req.params.restaurantId)
-    .populate("comments.author")
+    .populate("products.comments.author", "username")
     .then((restaurant) => {
-        if(restaurant != null && restaurant.comments.id(req.params.commentId) != null) {
+        if(restaurant != null && restaurant.products.id(req.params.productId) != null 
+                && restaurant.products.id(req.params.productId).comments.id(req.params.commentId) != null) {
+            restaurant.products.id(req.params.productId)
+                .comments.id(req.params.commentId).createdAt -= GMT_Brasil;
+            restaurant.products.id(req.params.productId)
+                .comments.id(req.params.commentId).updatedAt -= GMT_Brasil;
+
             res.statusCode = 200;
             res.setHeader("Content-Type", "application/json");
-            res.json(restaurant.comments.id(req.params.commentId));
+            res.json(restaurant.products.id(req.params.productId).comments.id(req.params.commentId));
         }
         else if(restaurant == null) {
             err = new Error("Restaurant " + req.params.restaurantId + " not found!");
+            err.statusCode = 404;
+            return next(err);
+        }
+        else if(restaurant.products.id(req.params.productId) == null) {
+            err = new Error("Product " + req.params.productId + " not found!");
             err.statusCode = 404;
             return next(err);
         }
@@ -414,30 +453,43 @@ restaurantRouter.route("/:restaurantId/products/:productId/comments/:commentId")
 })
 .put(authenticate.verifyUser, (req, res, next) => {
     Restaurant.findById(req.params.restaurantId)
+    //.populate("products.comments.author", "username")
     .then((restaurant) => {
-        if(restaurant != null && restaurant.comments.id(req.params.commentId) != null) {
-            if(restaurant.comments.id(req.params.commentId).author.equals(req.user._id)) {
-                if(req.body.rating) {
-                    restaurant.comments.id(req.params.commentId).rating = req.body.rating;
+        if(restaurant != null && restaurant.products.id(req.params.productId) != null 
+                && restaurant.products.id(req.params.productId).comments.id(req.params.commentId) != null) {
+            if(restaurant.products.id(req.params.productId)
+                    .comments.id(req.params.commentId).author.equals(req.user._id)) {
+                if(req.body.text != null) {
+                    restaurant.products.id(req.params.productId)
+                        .comments.id(req.params.commentId).text = req.body.text;
                 }
-                if(req.body.comment) {
-                    restaurant.comments.id(req.params.commentId).comment = req.body.comment;
-                }
+
                 restaurant.save()
                 .then((restaurant) => {
+                    restaurant.products.id(req.params.productId)
+                        .comments.id(req.params.commentId).createdAt -= GMT_Brasil;
+                    restaurant.products.id(req.params.productId)
+                        .comments.id(req.params.commentId).updatedAt -= GMT_Brasil;
+
                     res.statusCode = 200;
                     res.setHeader("Content-Type", "application/json");
-                    res.json(restaurant);
+                    res.json(restaurant.products.id(req.params.productId)
+                        .comments.id(req.params.commentId));
                 }, (err) => next(err));
             }
             else {
-                var err = new Error('You are not authorized to update this comment!');
+                var err = new Error("You are not authorized to update this comment!");
                 err.status = 403;
                 return next(err);                
             }
         }
         else if(restaurant == null) {
             err = new Error("Restaurant " + req.params.restaurantId + " not found!");
+            err.statusCode = 404;
+            return next(err);
+        }
+        else if(restaurant.products.id(req.params.productId) == null) {
+            err = new Error("Product " + req.params.productId + " not found!");
             err.statusCode = 404;
             return next(err);
         }
@@ -451,25 +503,37 @@ restaurantRouter.route("/:restaurantId/products/:productId/comments/:commentId")
 })
 .delete(authenticate.verifyUser, (req, res, next) => {
     Restaurant.findById(req.params.restaurantId)
+    //.populate("products.comments.author", "username")
     .then((restaurant) => {
-        if(restaurant != null && restaurant.comments.id(req.params.commentId) != null) {
-            if(restaurant.comments.id(req.params.commentId).author.equals(req.user._id)) {
-                restaurant.comments.id(req.params.commentId).remove();
+        if(restaurant != null && restaurant.products.id(req.params.productId) != null 
+                && restaurant.products.id(req.params.productId).comments.id(req.params.commentId) != null) {
+            if(restaurant.products.id(req.params.productId)
+                    .comments.id(req.params.commentId).author.equals(req.user._id)) {
+                var commentRemoved = restaurant.products.id(req.params.productId).comments.id(req.params.commentId).remove();
+
                 restaurant.save()
                 .then((restaurant) => {
+                    commentRemoved.createdAt -= GMT_Brasil;
+                    commentRemoved.updatedAt -= GMT_Brasil;
+
                     res.statusCode = 200;
                     res.setHeader("Content-Type", "application/json");
-                    res.json(restaurant);
+                    res.json(commentRemoved);
                 }, (err) => next(err));
             }
             else {
-                var err = new Error('You are not authorized to delete this comment!');
+                var err = new Error("You are not authorized to delete this comment!");
                 err.status = 403;
                 return next(err);
             }
         }
         else if(restaurant == null) {
             err = new Error("Restaurant " + req.params.restaurantId + " not found!");
+            err.statusCode = 404;
+            return next(err);
+        }
+        else if(restaurant.products.id(req.params.productId) == null) {
+            err = new Error("Product " + req.params.productId + " not found!");
             err.statusCode = 404;
             return next(err);
         }
