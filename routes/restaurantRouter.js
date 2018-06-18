@@ -8,9 +8,9 @@ const GMT_Brasil = 3 * 60 * 60 * 1000; //GMT-3 Brasil
 const restaurantRouter = express.Router();
 restaurantRouter.use(bodyParser.json());
 
-/*------------------------------------
+/*-------------
  * /restaurants
- * -----------------------------------*/
+ * ------------*/
 restaurantRouter.route("/")
 .get((req, res, next) => {
     Restaurant.find({})
@@ -57,9 +57,9 @@ restaurantRouter.route("/")
     .catch((err) => next(err));
 });
 
-/*------------------------------------
+/*---------------------------
  * /restaurants/:restaurantId
- * -----------------------------------*/
+ * --------------------------*/
 restaurantRouter.route("/:restaurantId")
 .get((req, res, next) => {
     Restaurant.findById(req.params.restaurantId)
@@ -161,7 +161,7 @@ restaurantRouter.route("/:restaurantId/products")
 })
 .put(authenticate.verifyUser, (req, res, next) => {
     res.statusCode = 403;
-    res.end("PUT operation not supported on /restaurants/" + req.params.restaurantId + "/products");
+    res.end("PUT operation not supported on /restaurants/restaurantId/products");
 })
 .delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Restaurant.findById(req.params.restaurantId)
@@ -170,6 +170,7 @@ restaurantRouter.route("/:restaurantId/products")
             for(var i = (restaurant.products.length - 1); i >= 0; i--) {
                 restaurant.products.id(restaurant.products[i]._id).remove();
             }
+            
             restaurant.save()
             .then((restaurant) => {
                 res.statusCode = 200;
@@ -186,9 +187,9 @@ restaurantRouter.route("/:restaurantId/products")
     .catch((err) => next(err));
 });
 
-/*-------------------------------------------------
+/*-----------------------------------------------
  * /restaurants/:restaurantId/products/:productId
- * ------------------------------------------------*/
+ * ----------------------------------------------*/
 restaurantRouter.route("/:restaurantId/products/:productId")
 .get((req, res, next) => {
     Restaurant.findById(req.params.restaurantId)
@@ -217,7 +218,7 @@ restaurantRouter.route("/:restaurantId/products/:productId")
 })
 .post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
-    res.end("POST method not supported on /restaurants/" + req.params.restaurantId + "/products/" + req.params.productId);
+    res.end("POST method not supported on /restaurants/restaurantId/products/productId");
 })
 .put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Restaurant.findById(req.params.restaurantId)
@@ -256,6 +257,7 @@ restaurantRouter.route("/:restaurantId/products/:productId")
     .then((restaurant) => {
         if(restaurant != null && restaurant.products.id(req.params.productId) != null) {
             var removed = restaurant.products.id(req.params.productId).remove();
+
             restaurant.save()
             .then((restaurant) => {
                 removed.createdAt -= GMT_Brasil;
@@ -280,4 +282,207 @@ restaurantRouter.route("/:restaurantId/products/:productId")
     .catch((err) => next(err));
 });
 
+/*--------------------------------------------------------
+ * /restaurants/:restaurantId/products/:productId/comments
+ * -------------------------------------------------------*/
+restaurantRouter.route("/:restaurantId/products/:productId/comments")
+.get((req, res, next) => {
+    Restaurant.findById(req.params.restaurantId)
+    .populate("products.comments.author", "username")
+    .then((restaurant) => {
+        if(restaurant != null && restaurant.products.id(req.params.productId) != null) {
+            restaurant.products.id(req.params.productId).comments.forEach(comment => {
+                comment.createdAt -= GMT_Brasil;
+                comment.updatedAt -= GMT_Brasil;
+            });
+
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "application/json");
+            res.json(restaurant.products.id(req.params.productId).comments);
+        }
+        else if(restaurant == null) {
+            err = new Error("Restaurant " + req.params.restaurantId + " not found!");
+            err.statusCode = 404;
+            return next(err);
+        }
+        else {
+            err = new Error("Product " + req.params.productId + " not found!");
+            err.statusCode = 404;
+            return next(err);
+        }
+    }, (err) => next(err))
+    .catch((err) => next(err));
+})
+.post(authenticate.verifyUser, (req, res, next) => {
+    Restaurant.findById(req.params.restaurantId)
+    .then((restaurant) => {
+        if(restaurant != null && restaurant.products.id(req.params.productId) != null) {
+            req.body.author = req.user._id;
+            restaurant.products.id(req.params.productId).comments.push(req.body);
+            restaurant.save()
+            .then((restaurant) => {
+                restaurant.products.id(req.params.productId)
+                    .comments[restaurant.products.id(req.params.productId).comments.length - 1]
+                        .createdAt -= GMT_Brasil;
+                restaurant.products.id(req.params.productId)
+                    .comments[restaurant.products.id(req.params.productId).comments.length - 1]
+                        .updatedAt -= GMT_Brasil;
+
+                res.statusCode = 200;
+                res.setHeader("Content-Type", "application/json");
+                res.json(restaurant.products.id(req.params.productId)
+                    .comments[restaurant.products.id(req.params.productId).comments.length - 1]);
+            }, (err) => next(err));
+        }
+        else if(restaurant == null) {
+            err = new Error("Restaurant " + req.params.restaurantId + " not found!");
+            err.statusCode = 404;
+            return next(err);
+        }
+        else {
+            err = new Error("Product " + req.params.productId + " not found!");
+            err.statusCode = 404;
+            return next(err);
+        }
+    }, (err) => next(err))
+    .catch((err) => next(err));
+})
+.put(authenticate.verifyUser, (req, res, next) => {
+    res.statusCode = 403;
+    res.end("PUT operation not supported on /restaurants/restaurantId/products/productId/comments");
+})
+.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+    Restaurant.findById(req.params.restaurantId)
+    .then((restaurant) => {
+        if(restaurant != null && restaurant.products.id(req.params.productId) != null) {
+            for(var i = (restaurant.products.id(req.params.productId).comments.length - 1); i >= 0; i--) {
+                restaurant.products.id(req.params.productId)
+                    .comments.id(restaurant.products.id(req.params.productId).comments[i]._id).remove();
+            }
+
+            restaurant.save()
+            .then((restaurant) => {
+                res.statusCode = 200;
+                res.setHeader("Content-Type", "application/json");
+                res.json(restaurant.products.id(req.params.productId).comments);
+            }, (err) => next(err));
+        }
+        else if(restaurant == null) {
+            err = new Error("Restaurant " + req.params.restaurantId + " not found!");
+            err.statusCode = 404;
+            return next(err);
+        }
+        else {
+            err = new Error("Product " + req.params.productId + " not found!");
+            err.statusCode = 404;
+            return next(err);
+        }
+    }, (err) => next(err))
+    .catch((err) => next(err));
+});
+
+/*-------------------------------------------------------------------
+ * /restaurants/:restaurantId/products/:productId/comments/:commentId
+ * ------------------------------------------------------------------*/
+restaurantRouter.route("/:restaurantId/products/:productId/comments/:commentId")
+.options((req, res) => { res.sendStatus(200); })
+.get((req, res, next) => {
+    Restaurant.findById(req.params.restaurantId)
+    .populate("comments.author")
+    .then((restaurant) => {
+        if(restaurant != null && restaurant.comments.id(req.params.commentId) != null) {
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "application/json");
+            res.json(restaurant.comments.id(req.params.commentId));
+        }
+        else if(restaurant == null) {
+            err = new Error("Restaurant " + req.params.restaurantId + " not found!");
+            err.statusCode = 404;
+            return next(err);
+        }
+        else {
+            err = new Error("Comment " + req.params.commentId + " not found!");
+            err.statusCode = 404;
+            return next(err);
+        }
+    }, (err) => next(err))
+    .catch((err) => next(err));
+})
+.post(authenticate.verifyUser, (req, res, next) => {
+    res.statusCode = 403;
+    res.end("POST method not supported on /restaurants/restaurantId/products/productId/comments/commentId");
+})
+.put(authenticate.verifyUser, (req, res, next) => {
+    Restaurant.findById(req.params.restaurantId)
+    .then((restaurant) => {
+        if(restaurant != null && restaurant.comments.id(req.params.commentId) != null) {
+            if(restaurant.comments.id(req.params.commentId).author.equals(req.user._id)) {
+                if(req.body.rating) {
+                    restaurant.comments.id(req.params.commentId).rating = req.body.rating;
+                }
+                if(req.body.comment) {
+                    restaurant.comments.id(req.params.commentId).comment = req.body.comment;
+                }
+                restaurant.save()
+                .then((restaurant) => {
+                    res.statusCode = 200;
+                    res.setHeader("Content-Type", "application/json");
+                    res.json(restaurant);
+                }, (err) => next(err));
+            }
+            else {
+                var err = new Error('You are not authorized to update this comment!');
+                err.status = 403;
+                return next(err);                
+            }
+        }
+        else if(restaurant == null) {
+            err = new Error("Restaurant " + req.params.restaurantId + " not found!");
+            err.statusCode = 404;
+            return next(err);
+        }
+        else {
+            err = new Error("Comment " + req.params.commentId + " not found!");
+            err.statusCode = 404;
+            return next(err);
+        }
+    }, (err) => next(err))
+    .catch((err) => next(err));
+})
+.delete(authenticate.verifyUser, (req, res, next) => {
+    Restaurant.findById(req.params.restaurantId)
+    .then((restaurant) => {
+        if(restaurant != null && restaurant.comments.id(req.params.commentId) != null) {
+            if(restaurant.comments.id(req.params.commentId).author.equals(req.user._id)) {
+                restaurant.comments.id(req.params.commentId).remove();
+                restaurant.save()
+                .then((restaurant) => {
+                    res.statusCode = 200;
+                    res.setHeader("Content-Type", "application/json");
+                    res.json(restaurant);
+                }, (err) => next(err));
+            }
+            else {
+                var err = new Error('You are not authorized to delete this comment!');
+                err.status = 403;
+                return next(err);
+            }
+        }
+        else if(restaurant == null) {
+            err = new Error("Restaurant " + req.params.restaurantId + " not found!");
+            err.statusCode = 404;
+            return next(err);
+        }
+        else {
+            err = new Error("Comment " + req.params.commentId + " not found!");
+            err.statusCode = 404;
+            return next(err);
+        }
+    }, (err) => next(err))
+    .catch((err) => next(err));
+});
+
+/*---------------
+ * Exports Module
+ * --------------*/
 module.exports = restaurantRouter;
