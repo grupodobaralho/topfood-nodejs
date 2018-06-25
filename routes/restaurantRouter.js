@@ -463,6 +463,10 @@ restaurantRouter.route("/:restaurantId/products/:productId/comments/:commentId")
                     restaurant.products.id(req.params.productId)
                         .comments.id(req.params.commentId).text = req.body.text;
                 }
+                if(req.body.image != null) {
+                    restaurant.products.id(req.params.productId)
+                        .comments.id(req.params.commentId).image = req.body.image;
+                }
 
                 restaurant.save()
                 .then((restaurant) => {
