@@ -47,3 +47,7 @@ exports.verifyAdmin = function (req, res, next) {
         return next(err);
     }
 };
+
+exports.isAdmin = function (admin, username) {
+    return admin || username == "admin";
+};
