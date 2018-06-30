@@ -50,6 +50,11 @@ const restaurantSchema = new Schema({
     image: {
         type: String
     },
+    rating: {
+        type: Number,
+        min: 1,
+        max: 5
+    },
     products: [productSchema]
 },{
     timestamps: true
