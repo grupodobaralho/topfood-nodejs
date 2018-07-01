@@ -253,10 +253,11 @@ restaurantRouter.route("/:restaurantId/products/:productId")
     Restaurant.findById(req.params.restaurantId)
     .then((restaurant) => {
         if(restaurant != null && restaurant.products.id(req.params.productId) != null) {
-            if(req.body.name  != null) restaurant.products.id(req.params.productId).name  = req.body.name;
-            if(req.body.price != null) restaurant.products.id(req.params.productId).price = req.body.price;
-            if(req.body.type  != null) restaurant.products.id(req.params.productId).type  = req.body.type;
-            if(req.body.image != null) restaurant.products.id(req.params.productId).image = req.body.image;
+            if(req.body.name   != null) restaurant.products.id(req.params.productId).name   = req.body.name;
+            if(req.body.price  != null) restaurant.products.id(req.params.productId).price  = req.body.price;
+            if(req.body.type   != null) restaurant.products.id(req.params.productId).type   = req.body.type;
+            if(req.body.image  != null) restaurant.products.id(req.params.productId).image  = req.body.image;
+            if(req.body.rating != null) restaurant.products.id(req.params.productId).rating = req.body.rating;
 
             restaurant.save()
             .then((restaurant) => {
@@ -356,16 +357,16 @@ restaurantRouter.route("/:restaurantId/products/:productId/comments")
                 comment.createdAt -= GMT_Brasil;
                 comment.updatedAt -= GMT_Brasil;
 
-                var retorno = { _id: comment._id
-                              , text: comment.text
-                              , author: { _id: req.user._id
-                                        , username: req.user.username }
-                              , createdAt: comment.createdAt
-                              , updatedAt: comment.updatedAt }
+                var response = { _id: comment._id
+                            , text: comment.text
+                            , author: { _id: req.user._id
+                                      , username: req.user.username }
+                            , createdAt: comment.createdAt
+                            , updatedAt: comment.updatedAt }
 
                 res.statusCode = 200;
                 res.setHeader("Content-Type", "application/json");
-                res.json(retorno);
+                res.json(response);
             }, (err) => next(err));
         }
         else if(restaurant == null) {
@@ -458,7 +459,6 @@ restaurantRouter.route("/:restaurantId/products/:productId/comments/:commentId")
 })
 .put(authenticate.verifyUser, (req, res, next) => {
     Restaurant.findById(req.params.restaurantId)
-    //.populate("products.comments.author", "username")
     .then((restaurant) => {
         if(restaurant != null && restaurant.products.id(req.params.productId) != null 
                 && restaurant.products.id(req.params.productId).comments.id(req.params.commentId) != null) {
@@ -475,15 +475,22 @@ restaurantRouter.route("/:restaurantId/products/:productId/comments/:commentId")
 
                 restaurant.save()
                 .then((restaurant) => {
-                    restaurant.products.id(req.params.productId)
-                        .comments.id(req.params.commentId).createdAt -= GMT_Brasil;
-                    restaurant.products.id(req.params.productId)
-                        .comments.id(req.params.commentId).updatedAt -= GMT_Brasil;
+                    var comment = restaurant.products.id(req.params.productId)
+                        .comments[restaurant.products.id(req.params.productId).comments.length - 1];
+                    
+                    comment.createdAt -= GMT_Brasil;
+                    comment.updatedAt -= GMT_Brasil;
+
+                    var response = { _id: comment._id
+                                , text: comment.text
+                                , author: { _id: req.user._id
+                                          , username: req.user.username }
+                                , createdAt: comment.createdAt
+                                , updatedAt: comment.updatedAt }
 
                     res.statusCode = 200;
                     res.setHeader("Content-Type", "application/json");
-                    res.json(restaurant.products.id(req.params.productId)
-                        .comments.id(req.params.commentId));
+                    res.json(response);
                 }, (err) => next(err));
             }
             else {
@@ -512,7 +519,6 @@ restaurantRouter.route("/:restaurantId/products/:productId/comments/:commentId")
 })
 .delete(authenticate.verifyUser, (req, res, next) => {
     Restaurant.findById(req.params.restaurantId)
-    //.populate("products.comments.author", "username")
     .then((restaurant) => {
         if(restaurant != null && restaurant.products.id(req.params.productId) != null 
                 && restaurant.products.id(req.params.productId).comments.id(req.params.commentId) != null) {
@@ -525,9 +531,16 @@ restaurantRouter.route("/:restaurantId/products/:productId/comments/:commentId")
                     commentRemoved.createdAt -= GMT_Brasil;
                     commentRemoved.updatedAt -= GMT_Brasil;
 
+                    var response = { _id: commentRemoved._id
+                        , text: commentRemoved.text
+                        , author: { _id: req.user._id
+                                  , username: req.user.username }
+                        , createdAt: commentRemoved.createdAt
+                        , updatedAt: commentRemoved.updatedAt }
+
                     res.statusCode = 200;
                     res.setHeader("Content-Type", "application/json");
-                    res.json(commentRemoved);
+                    res.json(response);
                 }, (err) => next(err));
             }
             else {

@@ -36,6 +36,11 @@ const productSchema = new Schema ({
         type: String,
         default: null
     },
+    rating: {
+        type: Number,
+        min: 1,
+        max: 5
+    },
     comments: [commentSchema]
 },{
     timestamps: true
