@@ -26,15 +26,13 @@ const productSchema = new Schema ({
     },
     price: {
         type: Number,
-        default: null
+        min: 0
     },
     type: {
-        type: String,
-        default: null
+        type: String
     },
     image: {
-        type: String,
-        default: null
+        type: String
     },
     rating: {
         type: Number,
