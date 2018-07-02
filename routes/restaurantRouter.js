@@ -495,7 +495,7 @@ restaurantRouter.route("/:restaurantId/products/:productId/comments/:commentId")
             }
             else {
                 var err = new Error("You are not authorized to update this comment!");
-                err.status = 403;
+                err.statusCode = 403;
                 return next(err);                
             }
         }
@@ -545,7 +545,7 @@ restaurantRouter.route("/:restaurantId/products/:productId/comments/:commentId")
             }
             else {
                 var err = new Error("You are not authorized to delete this comment!");
-                err.status = 403;
+                err.statusCode = 403;
                 return next(err);
             }
         }
