@@ -14,14 +14,15 @@ var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var peopleRouter = require("./routes/peopleRouter");
 var restaurantRouter = require("./routes/restaurantRouter");
+var databaseRouter = require("./routes/databaseRouter");
 
 // configuration ===============================================================
 mongoose.connect(process.env.MONGODB_URI || config.mLab); // connect to database
 
 // set up our express application ==============================================
 app.use(morgan("dev")); // log every request to the console
-app.use(cookieParser()); // read cookies (needed for auth)
-app.use(express.json()); // these two get information from html forms
+app.use(cookieParser());
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 
@@ -30,6 +31,7 @@ app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/people", peopleRouter);
 app.use("/restaurants", restaurantRouter);
+app.use("/database", databaseRouter);
 
 // catch 404 and forward to error handler ======================================
 app.use(function(req, res, next) {
